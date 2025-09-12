@@ -11,3 +11,5 @@ zigzag/*.html
 zigzag/*.c
 ZigZag.egg-info
 zigzag.egg-info
+/.project
+/.pydevproject

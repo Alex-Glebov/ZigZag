@@ -1,28 +1,54 @@
-cimport cython
+'''
+Created on 5 Sept 2025
+
+@author: alex
+conversion to plain python and anc code changes that you should care about correct params when YOU call 
+ identify_initial_pivot which I treat as pure internal function.
+ this optimisation economy you one nanosecond in lap year 
+  
+'''
+import pandas as pd
+
+#from pandas_datareader import get_data_yahoo
 import numpy as np
-from numpy cimport ndarray, int_t
+from numpy import double
+from numpy import ndarray 
 
-DEF PEAK = 1
-DEF VALLEY = -1
+PEAK = 1
+VALLEY = -1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cpdef int_t identify_initial_pivot(double [:] X,
-                                   double up_thresh,
-                                   double down_thresh):
-    cdef:
-        double x_0 = X[0]
-        double x_t = x_0
+def zigzag(dt: pd.Series, min_rate:float=0.02, max_bars:int=None, max_time:float=None)->pd.Series:
+    signal = peak_valley_pivots(X=dt, up_thresh=min_rate, down_thresh=-min_rate/2.0)
+    """
+    Translate pivots into trend lines.
 
-        double max_x = x_0
-        double min_x = x_0
+    :param pivots: the result of calling ``peak_valley_pivots``
+    :return: numpy array of trend lines. 
+    X[Valley]+i*(dX[Valley,PEAK] 
+    """
+    t_n:int = len(dt)
+    lines= np.empty(t_n)
+    lines.fill(np.nan)
+    idx= signal.nonzero()[0]
+    lines[idx] = dt[idx]
+    return lines
+    
 
-        int_t max_t = 0
-        int_t min_t = 0
+def identify_initial_pivot(X:[double],
+                                   up_thresh:double ,
+                                   down_thresh:double )->int :
+    x_0:double  = X[0]
+    x_t:double = x_0
 
-    up_thresh += 1
-    down_thresh += 1
+    max_x:double = x_0
+    min_x:double = x_0
+
+    max_t:int = 0
+    min_t:int = 0
+
+#    up_thresh += 1
+#    down_thresh += 1
 
     for t in range(1, len(X)):
         x_t = X[t]
@@ -70,13 +96,11 @@ def peak_valley_pivots(X, up_thresh, down_thresh):
     return peak_valley_pivots_detailed(X, up_thresh, down_thresh, True, False)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cpdef peak_valley_pivots_detailed(double [:] X,
-                                  double up_thresh,
-                                  double down_thresh,
-                                  bint limit_to_finalized_segments,
-                                  bint use_eager_switching_for_non_final):
+def peak_valley_pivots_detailed(X:pd.Series,
+                                  up_thresh:double,
+                                  down_thresh:double,
+                                  limit_to_finalized_segments:bool ,
+                                  use_eager_switching_for_non_final:bool) :
     """
     Find the peaks and valleys of a series.
 
@@ -98,20 +122,6 @@ cpdef peak_valley_pivots_detailed(double [:] X,
     """
     if down_thresh > 0:
         raise ValueError('The down_thresh must be negative.')
-
-    cdef:
-        int_t initial_pivot = identify_initial_pivot(X,
-                                                     up_thresh,
-                                                     down_thresh)
-        int_t t_n = len(X)
-        ndarray[int_t, ndim=1] pivots = np.zeros(t_n, dtype=np.int_)
-        int_t trend = -initial_pivot
-        int_t last_pivot_t = 0
-        double last_pivot_x = X[0]
-        double x, r
-
-    pivots[0] = initial_pivot
-
     # Adding one to the relative change thresholds saves operations. Instead
     # of computing relative change at each point as x_j / x_i - 1, it is
     # computed as x_j / x_1. Then, this value is compared to the threshold + 1.
@@ -119,11 +129,25 @@ cpdef peak_valley_pivots_detailed(double [:] X,
     up_thresh += 1
     down_thresh += 1
 
+    initial_pivot = identify_initial_pivot(X,
+                                         up_thresh,
+                                         down_thresh)
+    t_n:int = len(X)
+    pivots:ndarray[int]  = np.zeros(t_n, dtype=int)
+    trend:int = -initial_pivot
+    last_pivot_t:int = 0
+    last_pivot_x:double = X[0]
+    x:double
+    r:double
+
+    pivots[0] = initial_pivot
+
+
     for t in range(1, t_n):
         x = X[t]
         r = x / last_pivot_x
 
-        if trend == -1:
+        if trend == VALLEY:
             if r >= up_thresh:
                 pivots[last_pivot_t] = trend
                 trend = PEAK
@@ -132,7 +156,7 @@ cpdef peak_valley_pivots_detailed(double [:] X,
             elif x < last_pivot_x:
                 last_pivot_x = x
                 last_pivot_t = t
-        else:
+        else: # trend == PEAK 
             if r <= down_thresh:
                 pivots[last_pivot_t] = trend
                 trend = VALLEY
@@ -169,9 +193,7 @@ def max_drawdown(X) -> float:
     return max_drawdown_c(X)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cpdef double max_drawdown_c(ndarray[double, ndim=1] X):
+def max_drawdown_c(X:ndarray[double] )->double:
     """
     Compute the maximum drawdown of some sequence.
 
@@ -179,10 +201,10 @@ cpdef double max_drawdown_c(ndarray[double, ndim=1] X):
         otherwise the abs value of the maximum drawdown
         of sequence X
     """
-    cdef:
-        double mdd = 0
-        double peak = X[0]
-        double x, dd
+    mdd:double = 0
+    peak:double = X[0]
+    x:double
+    dd:double
 
     for x in X:
         if x > peak:
@@ -196,9 +218,7 @@ cpdef double max_drawdown_c(ndarray[double, ndim=1] X):
     return mdd if mdd != 0.0 else 0.0
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def pivots_to_modes(int_t [:] pivots):
+def pivots_to_modes(pivots:list[int]):
     """
     Translate pivots into trend modes.
 
@@ -207,11 +227,10 @@ def pivots_to_modes(int_t [:] pivots):
     is 1 and between (PEAK, VALLEY] it is -1.
     """
 
-    cdef:
-        int_t x, t
-        ndarray[int_t, ndim=1] modes = np.zeros(len(pivots),
-                                                dtype=np.int_)
-        int_t mode = -pivots[0]
+    x:int 
+    t:int 
+    modes:ndarray[int]  = np.zeros(len(pivots), dtype=int)
+    mode:int  = -pivots[0] #????
 
     modes[0] = pivots[0]
 
@@ -232,3 +251,5 @@ def compute_segment_returns(X, pivots):
     X = _to_ndarray(X)
     pivot_points = X[pivots != 0]
     return pivot_points[1:] / pivot_points[:-1] - 1.0
+
+    
