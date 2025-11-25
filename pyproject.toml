@@ -1,6 +1,6 @@
 [project]
 name = "zigzag"
-version = "0.3.3"
+version = "0.3.4"
 readme = "README.md"
 description = "Package for finding peaks and valleys of time series."
 authors = [ 

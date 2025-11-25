@@ -32,6 +32,7 @@ def zigzag(dt: pd.Series, min_rate:float=0.02, max_bars:int=None, max_time:float
     lines.fill(np.nan)
     idx= signal.nonzero()[0]
     lines[idx] = dt[idx]
+    lines = pd.Series(lines).interpolate(method='linear', limit_direction='both').to_numpy()
     return lines
     
 
