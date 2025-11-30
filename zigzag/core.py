@@ -7,16 +7,12 @@ conversion to plain python and anc code changes that you should care about corre
  this optimisation economy you one nanosecond in lap year 
   
 '''
+from zigzag.__init__ import  PEAK, VALLEY 
+
 import pandas as pd
-
-#from pandas_datareader import get_data_yahoo
 import numpy as np
-from numpy import double
+from numpy import double, array
 from numpy import ndarray 
-
-PEAK = 1
-VALLEY = -1
-
 
 def zigzag(dt: pd.Series, min_rate:float=0.02, max_bars:int=None, max_time:float=None)->pd.Series:
     signal = peak_valley_pivots(X=dt, up_thresh=min_rate, down_thresh=-min_rate/2.0)
@@ -25,7 +21,7 @@ def zigzag(dt: pd.Series, min_rate:float=0.02, max_bars:int=None, max_time:float
 
     :param pivots: the result of calling ``peak_valley_pivots``
     :return: numpy array of trend lines. 
-    X[Valley]+i*(dX[Valley,PEAK] 
+    X[Valley]+i*(dX[Valley,PEAK])
     """
     t_n:int = len(dt)
     lines= np.empty(t_n)
@@ -48,8 +44,8 @@ def identify_initial_pivot(X:[double],
     max_t:int = 0
     min_t:int = 0
 
-#    up_thresh += 1
-#    down_thresh += 1
+#    up_thresh += 1.0
+#    down_thresh += 1.0
 
     for t in range(1, len(X)):
         x_t = X[t]
@@ -71,7 +67,7 @@ def identify_initial_pivot(X:[double],
     t_n = len(X)-1
     return VALLEY if x_0 < X[t_n] else PEAK
 
-def _to_ndarray(X):
+def _to_ndarray(X:pd.Series | list | tuple)->ndarray:
     # The type signature in peak_valley_pivots_detailed does not work for
     # pandas series because as of 0.13.0 it no longer sub-classes ndarray.
     # The workaround everyone used was to call `.values` directly before
@@ -83,6 +79,8 @@ def _to_ndarray(X):
         X = X.values
     elif isinstance(X, (list, tuple)):
         X = np.array(X)
+    else:
+      raise ValueError(f"zigzag expecting ndarray, pd.Series or list type, but received type '{t}' ")
 
     return X
 
@@ -219,7 +217,7 @@ def max_drawdown_c(X:ndarray[double] )->double:
     return mdd if mdd != 0.0 else 0.0
 
 
-def pivots_to_modes(pivots:list[int]):
+def pivots_to_modes(pivots:list[int])->ndarray[int]:
     """
     Translate pivots into trend modes.
 
@@ -253,4 +251,33 @@ def compute_segment_returns(X, pivots):
     pivot_points = X[pivots != 0]
     return pivot_points[1:] / pivot_points[:-1] - 1.0
 
+def compute_performance(X:pd.Series | list , pivots:ndarray[int] )->ndarray[object] :
+  return compute_performance_nd(_to_ndarray(X),pivots)
+  
+def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
+  # extract indices of pivots and respective X values 
+  idx:ndarray =np.flatnonzero((pivots == VALLEY) | (pivots == PEAK )) # pivot indices
+
+  drawdowns=np.zeros(len(pivots), dtype=double)
+  gains    =np.zeros(len(pivots), dtype=double)
+  periods  =np.zeros(len(pivots), dtype=int)
     
+  for ix in range(0,len(X)-1):
+    while (idx[0] <= ix):
+      # we passed this pivot delete it 
+      idx=idx[1:]
+    drawdown= 0.0
+    gain    =-1.0
+    for j in range(0,min(1,len(idx))):
+      ij=idx[0]+j
+      pj=pivots[ij] # Takenext
+      v = (X[ij]-X[ix])/X[ix]
+      if pj == VALLEY:
+        drawdown = v
+        break # we count only vaslleys before peaks 
+      else:
+        gain     = v 
+    drawdowns[ix]=drawdown
+    gains[ix]    =gain
+    periods[ix]  =idx[0]-ix
+  return (drawdowns,gains,periods)

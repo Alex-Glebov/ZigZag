@@ -5,8 +5,9 @@ name = "pypi"
 
 [packages]
 pandas = "*"
-numpy = "*"
 matplotlib = "*"
+numpy = "*"
+zigzag = {file = ".", editable = true}
 
 [dev-packages]
 
