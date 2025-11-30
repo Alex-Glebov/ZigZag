@@ -1,19 +1,19 @@
 [project]
 name = "zigzag"
-version = "0.3.4"
+version = "0.3.5"
 readme = "README.md"
-description = "Package for finding peaks and valleys of time series."
+description = "Package for finding peaks and valleys in array or series."
 authors = [ 
   { name = "generativist" , email = "jbn@abreka.com"}
+  { name = "Alex",          email = "alex@lexema.com.au"}
   ]
 	
-	maintainers = [
-  {name = "Alex", email = "alex@lexema.com.au"}
+maintainers = [
+  {name = "Alex",           email = "alex@lexema.com.au"}
 ]
 
 license ="BSD-3-Clause"
 #licensefiles =[ "LICENCE.txt" ]
-#readme = "README.md"
 dependencies = [
 	    "numpy>= 1.21.1",
 	    "pandas>=2.3.1",
@@ -23,8 +23,8 @@ requires-python = ">=3.8"
 
 [build-system]
     requires = [
-      "setuptools",
-	    "numpy",
+		"setuptools",
+    	"numpy",
 	    "pandas",
     ]
     build-backend = "setuptools.build_meta"
@@ -32,12 +32,11 @@ requires-python = ">=3.8"
 	  cli=[  "matplotlib >=3.10.6"]
 
 [project.urls]
-    Homepage = "https://github.com/jbn/ZigZag"
-    Documentation = "https://github.com/jbn/ZigZag"
-    Issues = "https://github.com/Alex-Glebov/ZigZag/issues"
-    repository = "https://github.com/jbn/ZigZag"
-    homepage = "https://github.com/jbn/ZigZag"
-    Changelog = "https://github.com/jbn/ZigZag/CHANGELOG.md"
-    Repository = "https://github.com/Alex-Glebov/ZigZag.git"
+    Homepage      = "https://github.com/Alex-Glebov/ZigZag"
+    Documentation = "https://github.com/Alex-Glebov/ZigZag"
+    Issues        = "https://github.com/Alex-Glebov/ZigZag/issues"
+    repository    = "https://github.com/Alex-Glebov/ZigZag"
+    Changelog     = "https://github.com/Alex-Glebov/ZigZag/CHANGELOG.md"
+    Repository    = "https://github.com/Alex-Glebov/ZigZag.git"
 
     
