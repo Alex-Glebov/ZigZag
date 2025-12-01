@@ -251,11 +251,7 @@ def compute_segment_returns(X, pivots):
     pivot_points = X[pivots != 0]
     return pivot_points[1:] / pivot_points[:-1] - 1.0
 
-<<<<<<< HEAD
 def compute_performance(X:pd.Series | list , pivots:ndarray[int] )->(list,list,list) :
-=======
-def compute_performance(X:pd.Series | list , pivots:ndarray[int] )->ndarray[object] :
->>>>>>> 7c9b47e2940b13544dbfeaf3d28f1a129522033f
   return compute_performance_nd(_to_ndarray(X),pivots)
   
 def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
