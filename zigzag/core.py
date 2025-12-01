@@ -272,13 +272,8 @@ def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
       idx=idx[1:]
     drawdown= 0.0
     gain    =-1.0
-<<<<<<< HEAD
     for j in range(0,min(2,len(idx))):
       ij=idx[j]
-=======
-    for j in range(0,min(1,len(idx))):
-      ij=idx[0]+j
->>>>>>> 7c9b47e2940b13544dbfeaf3d28f1a129522033f
       pj=pivots[ij] # Takenext
       v = (X[ij]-X[ix])/X[ix]
       if pj == VALLEY:
