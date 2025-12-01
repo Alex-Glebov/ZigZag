@@ -211,7 +211,7 @@ class TestComputerPerformance(TestCase):
         result = compute_performance(data,pivots)
         assert_array_almost_equal(
           result[0],      
-          [0. ,         0.,         -0.18181818, -0.1,         0.,          0.      ]
+          [-0.1     , -0.142857,   -0.18181818, -0.1,         0.,          0.      ]
           )
         assert_array_almost_equal(
           result[1],      

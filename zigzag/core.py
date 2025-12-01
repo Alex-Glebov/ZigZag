@@ -251,7 +251,11 @@ def compute_segment_returns(X, pivots):
     pivot_points = X[pivots != 0]
     return pivot_points[1:] / pivot_points[:-1] - 1.0
 
+<<<<<<< HEAD
+def compute_performance(X:pd.Series | list , pivots:ndarray[int] )->(list,list,list) :
+=======
 def compute_performance(X:pd.Series | list , pivots:ndarray[int] )->ndarray[object] :
+>>>>>>> 7c9b47e2940b13544dbfeaf3d28f1a129522033f
   return compute_performance_nd(_to_ndarray(X),pivots)
   
 def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
@@ -268,8 +272,8 @@ def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
       idx=idx[1:]
     drawdown= 0.0
     gain    =-1.0
-    for j in range(0,min(1,len(idx))):
-      ij=idx[0]+j
+    for j in range(0,min(2,len(idx))):
+      ij=idx[j]
       pj=pivots[ij] # Takenext
       v = (X[ij]-X[ix])/X[ix]
       if pj == VALLEY:
