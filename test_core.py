@@ -172,7 +172,7 @@ class TestMaxDrawdown(TestCase):
         data = np.array([1.0, 1.05, 1.1, 1.0, 0.9, 1.5])
         self.assertAlmostEqual(max_drawdown(data), 0.18181818181818188)
 
-class TestComputerPerformance(TestCase):
+class TestPerformanceComputation(TestCase):
     def test_strictly_increasing(self):
         data = np.linspace(1.0, 100.0, 10)
         pivots = peak_valley_pivots(data, 0.1, -0.1)
@@ -195,31 +195,33 @@ class TestComputerPerformance(TestCase):
         result = compute_performance(data,pivots)
         assert_array_almost_equal(
           result[1],      
-          [-1., -1., -1., -1., -1., -1., -1., -1., -1., 0. ]
+          [0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ]
           )
         assert_array_almost_equal(
           result[0],      
-          [-0.99, -0.98876404, -0.98717949, -0.98507463, -0.98214286, -0.97777778, -0.97058824, -0.95652174, -0.91666667,  0.]
+          [ 0.99,  0.98876404,  0.98717949,  0.98507463,  0.98214286,  0.97777778,  0.97058824,  0.95652174,  0.91666667,  0.]
           )
         assert_array_almost_equal(
-          result[2],        np.linspace(9, 0, 10)
+          result[2],
+          [0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ]
           )
  
     def test_rise_fall_rise(self):
+      #                   -    /     /^\   \  \/    /
         data = np.array([1.0, 1.05, 1.1, 1.0, 0.9, 1.5])
         pivots = peak_valley_pivots(data, 0.1, -0.1)
         result = compute_performance(data,pivots)
         assert_array_almost_equal(
           result[0],      
-          [-0.1     , -0.142857,   -0.18181818, -0.1,         0.,          0.      ]
+          [ 0  ,  0    ,    0.18181818,  0.1,    0.,          0. ]
           )
         assert_array_almost_equal(
           result[1],      
-          [0.1,         0.04761905, -1.,         -1.,          0.66666667,  0.      ]
+          [0.1,   0.04761905, 0.363636,  0.5,    0.66666667,  0. ]
           )
         assert_array_almost_equal(
           result[2],
-          [2,1, 2, 1, 1, 0 ]
+          [2,       1,        3,           2,      1,           0  ]
           )
 
 class TestPivotsToModes(TestCase):

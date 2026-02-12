@@ -15,7 +15,7 @@ from numpy import double, array
 from numpy import ndarray 
 
 def zigzag(dt: pd.Series, min_rate:float=0.02, max_bars:int=None, max_time:float=None)->pd.Series:
-    signal = peak_valley_pivots(X=dt, up_thresh=min_rate, down_thresh=-min_rate/2.0)
+    signal = peak_valley_pivots(X=dt, up_thresh=min_rate, down_thresh=-min_rate)
     """
     Translate pivots into trend lines.
 
@@ -75,12 +75,12 @@ def _to_ndarray(X:pd.Series | list | tuple)->ndarray:
     t = type(X)
     if t.__name__ == 'ndarray':
         pass  # Check for ndarray first for historical reasons
-    elif f"{t.__module__}.{t.__name__}" == 'pandas.core.series.Series':
+    elif 'pandas' in t.__module__ and 'Series'in t.__name__:
         X = X.values
     elif isinstance(X, (list, tuple)):
         X = np.array(X)
     else:
-      raise ValueError(f"zigzag expecting ndarray, pd.Series or list type, but received type '{t}' ")
+      raise ValueError(f"zigzag expecting ndarray, pandas.Series or list type, but received type '{t}' ")
 
     return X
 
@@ -262,22 +262,19 @@ def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
   gains    =np.zeros(len(pivots), dtype=double)
   periods  =np.zeros(len(pivots), dtype=int)
     
-  for ix in range(0,len(X)-1):
+  for ix in range(0,len(X)-1): # current_point
     while (idx[0] <= ix):
       # we passed this pivot delete it 
       idx=idx[1:]
-    drawdown= 0.0
-    gain    =-1.0
-    for j in range(0,min(2,len(idx))):
-      ij=idx[j]
-      pj=pivots[ij] # Takenext
-      v = (X[ij]-X[ix])/X[ix]
-      if pj == VALLEY:
-        drawdown = v
-        break # we count only vaslleys before peaks 
-      else:
-        gain     = v 
-    drawdowns[ix]=drawdown
-    gains[ix]    =gain
-    periods[ix]  =idx[0]-ix
+    # we need two point either [peak, valley] or [valley, peak]
+    # we break loop after first peak
+    for j in range(0,min(2,len(idx))): # pivot indexes next to current_point
+      ij=idx[j] # next pivot
+      if pivots[ij] == PEAK:
+        gains[ix]    = (X[ij] - X[ix])/X[ix] # ++ looks correct
+        periods[ix]  = ij-ix                 # ++ looks correct
+        break # we count only valleys before peaks
+      else:   # pivots[ij] == VALLEY
+        drawdowns[ix] = (X[ix] - X[ij])/X[ix] # ++ looks correct
+    # completed one item
   return (drawdowns,gains,periods)

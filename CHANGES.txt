@@ -18,4 +18,9 @@ v0.3.4, 2025-11-25 -- zigzag now return lines
                       original code return only values in peak points, keeps NAN
                       as values in between PEAK and VALLEY. Added linear 
                       interpolation call feom pandas package to fill up array.
-v0.3.5, 2025-12-00 -- calc next drawdown and gain and time  for each value 
+v0.3.5, 2025-12-00 -- calc next drawdown and gain and time  for each value
+V0.3.6, 2025-12-01 -- fixing errors  in calculations
+V0.3.7, 2026-02-12 -- update test_core and change 'zigzag func to the same level
+                      down_thresh as up_thresh. change check for type as
+                      Pandas Series for array in inner function __to_ndarray
+                      change compute_perfomance_nd
