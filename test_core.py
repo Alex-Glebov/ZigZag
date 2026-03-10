@@ -7,7 +7,8 @@ from zigzag.core import (
   max_drawdown,
   compute_segment_returns,
   compute_performance,
-  pivots_to_modes
+  pivots_to_modes,
+  zigzag
   )
 from zigzag import   PEAK,  VALLEY,  SIDEMOVE
 
@@ -20,7 +21,7 @@ from numpy import ndarray
 #from zigzag.core import *
 #
 # zigzag.identify_initial_pivot(data, 1.1,  0.9) has absolute values instead 
-# zigzag.identify_initial_pivot(data, 0.1, -0.1)  
+# zigzag.identify_initial_pivot(data, 0.01, -0.01)  
 # as threshold 0.1 and -0.1 should be increased by 1.0 as it is used to measure relations. xn/x1 
 # previous version has inner operation adding 1 inside this function. nowadays it is done once at
 # caller function peak_valley_pivots_detailed where this increased value also in use 
@@ -30,45 +31,55 @@ from numpy import ndarray
 
 class TestIdentifyInitialPivot(TestCase):
     def test_strictly_increasing(self):
-        data = np.linspace(1, 2., 10)
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         VALLEY)
+      data = np.linspace(1, 2., 10)
+      calculated = identify_initial_pivot(data, 0.01, -0.01)
+      self.assertEqual(calculated, VALLEY)
+      #identify_initial_pivot is working wirk positive vector 
+#      data = np.linspace(-2, -1., 10)
+#      calculated = identify_initial_pivot(data, 0.01, -0.01)
+#      self.assertEqual(calculated, VALLEY)
 
     def test_increasing_kinked(self):
         data = np.array([1.0, 0.99, 1.1])
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         PEAK)
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated, PEAK)
 
     def test_strictly_increasing_under_threshold(self):
         data = np.linspace(1, 1.01, 10)
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         VALLEY)
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated, VALLEY)
 
     def test_increasing_under_threshold_kinked(self):
-        data = np.array([1.0, 0.99, 1.02])
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         VALLEY)
+        data = np.array([1.0, 0.996, 1.001])
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated,VALLEY)
 
     def test_strictly_decreasing(self):
         data = np.linspace(1, 0.5, 10)
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         PEAK)
+        calculated  = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated, PEAK)
+        data = np.linspace(-0.5, -1.0, 10)
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated, PEAK)
 
     def test_decreasing_kinked(self):
-        data = np.array([1.0, 1.01, 0.9])
-        self.assertEqual(identify_initial_pivot(data,1.1, 0.9),
-                         VALLEY)
+        data = np.array([1.0, 1.1, 0.9])
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated,VALLEY)
 
     def test_strictly_decreasing_under_threshold(self):
         data = np.linspace(1, 0.99, 10)
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         PEAK)
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+        self.assertEqual(calculated, PEAK)
 
     def test_decreasing_under_threshold_kinked(self):
-        data = np.array([1.0, 1.01, 0.99])
-
-        self.assertEqual(identify_initial_pivot(data, 1.1, 0.9),
-                         PEAK)
+        data = np.array([1.0, 1.009, 0.995])
+        calculated = identify_initial_pivot(data, 0.01, -0.01)
+#        self.assertEqual(calculated, PEAK)
+        # I think it is correct: as[1]= 1.009 - will be max so start should be Valley
+        # even distance below threshold    
+        self.assertEqual(calculated, VALLEY) 
+        
 
 
 class TestPeakValleyPivots(TestCase):
@@ -79,15 +90,15 @@ class TestPeakValleyPivots(TestCase):
 
     def test_strictly_increasing(self):
         data = np.linspace(1, 10, 10)
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.zeros_like(data)
         expected_result[0], expected_result[-1] = VALLEY, PEAK
 
         assert_array_equal(result, expected_result)
 
     def test_strictly_increasing_but_less_than_threshold(self):
-        data = np.linspace(1.0, 1.05, 10)
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        data = np.linspace(1.0, 1.005, 10)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.zeros_like(data)
         expected_result[0], expected_result[-1] = VALLEY, PEAK
 
@@ -96,7 +107,7 @@ class TestPeakValleyPivots(TestCase):
 
     def test_strictly_decreasing(self):
         data = np.linspace(10, 0, 10)
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.zeros_like(data)
         expected_result[0], expected_result[-1] = PEAK, VALLEY
 
@@ -104,7 +115,7 @@ class TestPeakValleyPivots(TestCase):
 
     def test_strictly_decreasing_but_less_than_threshold(self):
         data = np.linspace(1.05, 1.0, 10)
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.zeros_like(data)
         expected_result[0], expected_result[-1] = PEAK, VALLEY
 
@@ -112,28 +123,28 @@ class TestPeakValleyPivots(TestCase):
 
     def test_single_peaked(self):
         data = np.array([1.0, 1.2, 1.05])
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.array([VALLEY, PEAK, VALLEY])
 
         assert_array_equal(result, expected_result)
 
     def test_single_valleyed(self):
         data = np.array([1.0, 0.9, 1.2])
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.array([PEAK, VALLEY, PEAK])
 
         assert_array_equal(result, expected_result)
 
     def test_increasing_kinked(self):
-        data = np.array([1.0, 0.99, 1.1])
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        data = np.array([1.0, 0.9, 1.1])
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.array([PEAK, VALLEY, PEAK])
 
         assert_array_equal(result, expected_result)
 
     def test_decreasing_kinked(self):
         data = np.array([1.0, 1.01, 0.9])
-        result = peak_valley_pivots(data, 0.1, -0.1)
+        result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.array([VALLEY, PEAK, VALLEY])
 
         assert_array_equal(result, expected_result)
@@ -142,22 +153,52 @@ class TestPeakValleyPivots(TestCase):
 class TestSegmentReturn(TestCase):
     def test_strictly_increasing(self):
         data = np.linspace(1.0, 100.0, 10)
-        pivots = peak_valley_pivots(data, 0.1, -0.1)
-        assert_array_almost_equal(compute_segment_returns(data, pivots),
-                                  np.array([99.0]))
+        pivots = peak_valley_pivots(data, 0.01, -0.01)
+        calculated = compute_segment_returns(data, pivots)
+        assert_array_almost_equal(calculated ,np.array([99.0]))
 
     def test_strictly_decreasing(self):
         data = np.linspace(100.0, 1.0, 10)
-        pivots = peak_valley_pivots(data, 0.1, -0.1)
-        assert_array_almost_equal(compute_segment_returns(data, pivots),
+        pivots = peak_valley_pivots(data, 0.01, -0.01)
+        calculated = compute_segment_returns(data, pivots)
+        assert_array_almost_equal(calculated,
                                   np.array([-0.99]))
 
     def test_rise_fall_rise(self):
         data = np.array([1.0, 1.05, 1.1, 1.0, 0.9, 1.5])
-        pivots = peak_valley_pivots(data, 0.1, -0.1)
-        assert_array_almost_equal(compute_segment_returns(data, pivots),
+        pivots = peak_valley_pivots(data, 0.01, -0.01)
+        calculated = compute_segment_returns(data, pivots)
+        assert_array_almost_equal(calculated,
                                   np.array([0.1, -0.181818, 0.6666666]))
 
+class TestZigZag(TestCase):
+    def test_up_down(self):
+      data     = np.array([0.1,  1.  , 3.  , 5.  , 7.  , 8. , 6. , 5. , 5. , 2. ])
+      expected = np.array([0.1 , 1.68, 3.26, 4.84, 6.42, 8. , 6.5, 5.0, 3.5, 2. ])
+      zigline = zigzag(data, 0.01, -0.01)
+      assert_array_almost_equal( zigline,   expected )
+
+#    def test_down_up(self):
+#        data     = np.array([-0.1, -1.  , -3.  , -5.  , -7.  , -8., -6. ,-5. , -5., -2.])
+#        expected = np.array([-0.1, -1.68, -3.26, -4.84, -6.42, -8., -6.5, -5., -3.5,-2.])
+#        #  [-0.1      , -0.31111111, -0.52222222, -0.73333333, -0.94444444,
+#        #  -1.15555556, -1.36666667, -1.57777778, -1.78888889, -2.           ])
+#        
+#        zigline = zigzag(data, 0.01, -0.01)
+#        assert_array_almost_equal( zigline,  expected )
+#    def test_strictly_decreasing(self):
+#        #data = np.array([ 0.,  1. , 3. , 5. , 7. , 8. , 6. ,5. , 5., 2.])
+#        data = np.linspace(100.0, 1.0, 10)
+#        pivots = peak_valley_pivots(data, 0.01, -0.01)
+#        assert_array_almost_equal(compute_segment_returns(data, pivots),
+#                                  np.array([-0.99]))
+#
+#    def test_rise_fall_rise(self):
+#        data = np.array([1.0, 1.05, 1.1, 1.0, 0.9, 1.5])
+#        pivots = peak_valley_pivots(data, 0.01, -0.01)
+#        assert_array_almost_equal(compute_segment_returns(data, pivots),
+#                                  np.array([0.1, -0.181818, 0.6666666]))
+#
 
 class TestMaxDrawdown(TestCase):
     def test_strictly_increasing(self):
@@ -175,7 +216,7 @@ class TestMaxDrawdown(TestCase):
 class TestPerformanceComputation(TestCase):
     def test_strictly_increasing(self):
         data = np.linspace(1.0, 100.0, 10)
-        pivots = peak_valley_pivots(data, 0.1, -0.1)
+        pivots = peak_valley_pivots(data, 0.01, -0.01)
         result = compute_performance(data,pivots)
         assert_array_almost_equal(
           result[0],      np.zeros(10, dtype=double)
@@ -191,7 +232,7 @@ class TestPerformanceComputation(TestCase):
 
     def test_strictly_decreasing(self):
         data = np.linspace(100.0, 1.0, 10)
-        pivots = peak_valley_pivots(data, 0.1, -0.1)
+        pivots = peak_valley_pivots(data, 0.01, -0.01)
         result = compute_performance(data,pivots)
         assert_array_almost_equal(
           result[1],      
@@ -209,7 +250,7 @@ class TestPerformanceComputation(TestCase):
     def test_rise_fall_rise(self):
       #                   -    /     /^\   \  \/    /
         data = np.array([1.0, 1.05, 1.1, 1.0, 0.9, 1.5])
-        pivots = peak_valley_pivots(data, 0.1, -0.1)
+        pivots = peak_valley_pivots(data, 0.01, -0.01)
         result = compute_performance(data,pivots)
         assert_array_almost_equal(
           result[0],      

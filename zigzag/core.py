@@ -7,65 +7,78 @@ conversion to plain python and anc code changes that you should care about corre
  this optimisation economy you one nanosecond in lap year 
   
 '''
-from zigzag.__init__ import  PEAK, VALLEY 
+from zigzag.__init__ import  PEAK, VALLEY, EPS 
 
 import pandas as pd
 import numpy as np
 from numpy import double, array
-from numpy import ndarray 
+from numpy import ndarray, copy 
 
-def zigzag(dt: pd.Series, min_rate:float=0.02, max_bars:int=None, max_time:float=None)->pd.Series:
-    signal = peak_valley_pivots(X=dt, up_thresh=min_rate, down_thresh=-min_rate)
+def zigzag(X: pd.Series | np.ndarray, min_rate:float=0.02, down_rate=None)->pd.Series:
     """
     Translate pivots into trend lines.
-
     :param pivots: the result of calling ``peak_valley_pivots``
-    :return: numpy array of trend lines. 
+    :return: numpy array of trend lines.
     X[Valley]+i*(dX[Valley,PEAK])
     """
-    t_n:int = len(dt)
-    lines= np.empty(t_n)
-    lines.fill(np.nan)
-    idx= signal.nonzero()[0]
-    lines[idx] = dt[idx]
-    lines = pd.Series(lines).interpolate(method='linear', limit_direction='both').to_numpy()
-    return lines
+    if down_rate is None:
+      down_rate=-min_rate
+    #
+    signal = peak_valley_pivots(X=X, up_thresh=min_rate, down_thresh= down_rate)
+    mask = signal != 0 
+    if isinstance(X,np.ndarray):
+      filled = pd.Series(X).where(signal != 0).interpolate(method='linear', limit_direction='both')
+      #filled = np.interp(dt, dt[mask], signal[mask])
+    else:
+      filled =  pd.Series(X).where(signal != 0).interpolate(method='time', limit_direction='both')
+    return filled
+
     
 
 def identify_initial_pivot(X:[double],
-                                   up_thresh:double ,
-                                   down_thresh:double )->int :
-    x_0:double  = X[0]
-    x_t:double = x_0
+                          up_thresh:double ,
+                          down_thresh:double 
+                          )->int :
+  """
+  X = np.array of double values ( All positive  ) 
+  up_thresh  =  minimal relatively last VALLEY  raising value which shall be recognized as new PEAK  
+  down_thresh  =  minimal relatively last PEAK  decline value which shall be recognized as new VALEY
+  divider = - miminal value near 0 to escape dividing by zero  
+  """
+  # simple function replace 0 to min recognizible value   
+#  min_value = lambda x : x if np.abs(x) > min_divider else np.sign(x)*min_divider 
+#  x_0:double  = min_value(X[0])
+  x_0:double  = X[0]
 
-    max_x:double = x_0
-    min_x:double = x_0
+  max_x:double = x_0
+  min_x:double = x_0
+  x_t:double   = x_0
 
-    max_t:int = 0
-    min_t:int = 0
+  max_t:int = 0
+  min_t:int = 0
 
-#    up_thresh += 1.0
-#    down_thresh += 1.0
+#  if up_thresh   < 1:  up_thresh   += 1.0
+#  if down_thresh < 0:  down_thresh += 1.0
 
-    for t in range(1, len(X)):
-        x_t = X[t]
+  for t in range(1, len(X)):
+#      x_t = min_value(X[t])
+      x_t = X[t]
 
-        if x_t / min_x >= up_thresh:
-            return VALLEY if min_t == 0 else PEAK
+      if x_t  >= (1 + up_thresh  ) * min_x:
+          return VALLEY if min_t == 0 else PEAK
 
-        if x_t / max_x <= down_thresh:
-            return PEAK if max_t == 0 else VALLEY
+      if x_t  <= (1 + down_thresh) * max_x: # down is negatigve 
+          return PEAK   if max_t == 0 else VALLEY
 
-        if x_t > max_x:
-            max_x = x_t
-            max_t = t
+      if x_t > max_x:
+          max_x = x_t
+          max_t = t
 
-        if x_t < min_x:
-            min_x = x_t
-            min_t = t
-
-    t_n = len(X)-1
-    return VALLEY if x_0 < X[t_n] else PEAK
+      if x_t < min_x:
+          min_x = x_t
+          min_t = t
+  pivot = VALLEY if X[0] < X[-1] else PEAK         
+  return pivot
 
 def _to_ndarray(X:pd.Series | list | tuple)->ndarray:
     # The type signature in peak_valley_pivots_detailed does not work for
@@ -85,21 +98,35 @@ def _to_ndarray(X:pd.Series | list | tuple)->ndarray:
     return X
 
 
-def peak_valley_pivots(X, up_thresh, down_thresh):
-    X = _to_ndarray(X)
-
+def peak_valley_pivots(
+    X:ndarray| pd.Series, up_thresh, down_thresh, 
+                       limit_to_finalized_segments=True,
+                       use_eager_switching_for_non_final=False
+                       )-> ndarray[int]:
+  
+    X = _to_ndarray(X) 
     # Ensure float for correct signature
     if not str(X.dtype).startswith('float'):
         X = X.astype(np.float64)
+    # Algorithm does not work proper on X has negative values.
+    # so we find min in array and substract from array shifting X down 
+    # ( or up for negative minimum ) to the zero and add EPS to make global min 
+    # positive
+    X  = X.copy() # DEEP COPY as we modify it 
+    X -= X.min()-EPS # - and - give us positive offset        
 
-    return peak_valley_pivots_detailed(X, up_thresh, down_thresh, True, False)
+
+    return peak_valley_pivots_detailed(X, up_thresh, down_thresh, 
+                                       limit_to_finalized_segments, 
+                                       use_eager_switching_for_non_final )
 
 
-def peak_valley_pivots_detailed(X:pd.Series,
-                                  up_thresh:double,
-                                  down_thresh:double,
-                                  limit_to_finalized_segments:bool ,
-                                  use_eager_switching_for_non_final:bool) :
+def peak_valley_pivots_detailed(
+    X:ndarray[float],
+    up_thresh:double,
+    down_thresh:double,
+    limit_to_finalized_segments:bool ,
+    use_eager_switching_for_non_final:bool) -> ndarray[int]:
     """
     Find the peaks and valleys of a series.
 
@@ -125,12 +152,14 @@ def peak_valley_pivots_detailed(X:pd.Series,
     # of computing relative change at each point as x_j / x_i - 1, it is
     # computed as x_j / x_1. Then, this value is compared to the threshold + 1.
     # This saves (t_n - 1) subtractions.
+    # use fraction now 
+    
+    # X alredy positive 
+    initial_pivot = identify_initial_pivot(
+      X,  up_thresh,      down_thresh
+      )
     up_thresh += 1
     down_thresh += 1
-
-    initial_pivot = identify_initial_pivot(X,
-                                         up_thresh,
-                                         down_thresh)
     t_n:int = len(X)
     pivots:ndarray[int]  = np.zeros(t_n, dtype=int)
     trend:int = -initial_pivot
@@ -251,11 +280,15 @@ def compute_segment_returns(X, pivots):
     pivot_points = X[pivots != 0]
     return pivot_points[1:] / pivot_points[:-1] - 1.0
 
-def compute_performance(X:pd.Series | list , pivots:ndarray[int] )->(list,list,list) :
-  return compute_performance_nd(_to_ndarray(X),pivots)
+def compute_performance(X:pd.Series, pivots:pd.Series )->(list,list,list) :
+#  we need to use time in index to correctly calc velocity of changes so here new algorithm
+  (drawdowns,gains,periods) =  compute_performance_nd(_to_ndarray(X),_to_ndarray(pivots))
+  # convert to pd.Series
+  return (drawdowns,gains,periods)
   
 def compute_performance_nd(X:ndarray, pivots:ndarray[int])->(list,list,list) :
   # extract indices of pivots and respective X values 
+  # we need to use time in index to correctly calc velocity of changes
   idx:ndarray =np.flatnonzero((pivots == VALLEY) | (pivots == PEAK )) # pivot indices
 
   drawdowns=np.zeros(len(pivots), dtype=double)

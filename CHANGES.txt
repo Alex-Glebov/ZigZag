@@ -20,7 +20,18 @@ v0.3.4, 2025-11-25 -- zigzag now return lines
                       interpolation call feom pandas package to fill up array.
 v0.3.5, 2025-12-00 -- calc next drawdown and gain and time  for each value
 V0.3.6, 2025-12-01 -- fixing errors  in calculations
-V0.3.7, 2026-02-12 -- update test_core and change 'zigzag func to the same level
-                      down_thresh as up_thresh. change check for type as
+V0.3.7, 2026-02-12 -- update test_core and change 'zigzag' func to the same 
+                      level down_thresh as up_thresh. change check for type as
                       Pandas Series for array in inner function __to_ndarray
                       change compute_perfomance_nd
+V0.3.8, 2026-03-11 -- update test_core: all function accept threshold as 
+                      fraction part of it. identified core incorrectly calc 
+                      pivots for negative negaive values. update test_core 
+                      functions.  
+                      'compute_performance' base on parameters type as pd.Series
+                      'compute_performance_nd' based on parameters type ndarray 
+                      zigzag  - removed not implemented params 'max_bars' and 
+                      'max_time', but  add 'down_rate' as separate threshold 
+                      value. if missed  down_rate = -min_rate.
+                      implemented 'linear' or 'time' interpolation if pd.Series 
+                      has 'time' index. Use 'linear' only for ndarray vectors 
