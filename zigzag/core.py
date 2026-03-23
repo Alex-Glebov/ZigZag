@@ -14,23 +14,28 @@ import numpy as np
 from numpy import double, array
 from numpy import ndarray, copy 
 
-def zigzag(X: pd.Series | np.ndarray, min_rate:float=0.02, down_rate=None)->pd.Series:
+def zigzag(X: pd.Series | np.ndarray, pivots: pd.Series | np.ndarray|None = None, 
+           up_rate:float=0.02, down_rate=None)->pd.Series:
     """
     Translate pivots into trend lines.
     :param pivots: the result of calling ``peak_valley_pivots``
     :return: numpy array of trend lines.
     X[Valley]+i*(dX[Valley,PEAK])
     """
-    if down_rate is None:
-      down_rate=-min_rate
-    #
-    signal = peak_valley_pivots(X=X, up_thresh=min_rate, down_thresh= down_rate)
-    mask = signal != 0 
-    if isinstance(X,np.ndarray):
-      filled = pd.Series(X).where(signal != 0).interpolate(method='linear', limit_direction='both')
+    if not isinstance(pivots ,(pd.Series,np.ndarray)):
+      # calc pivots first 
+      if down_rate is None:
+        down_rate=-up_rate
+      pivots = peak_valley_pivots(X=X, up_thresh=up_rate, down_thresh= down_rate)
+    mask = pivots != 0 
+    # filled linear
+    if isinstance(X,np.ndarray) or isinstance(X.index,pd.RangeIndex):
+      filled = pd.Series(X).where(pivots != 0).interpolate(method='linear', limit_direction='both')
       #filled = np.interp(dt, dt[mask], signal[mask])
+    elif isinstance(X.index,pd.DatetimeIndex):
+      filled =  pd.Series(X).where(pivots != 0).interpolate(method='time', limit_direction='both')
     else:
-      filled =  pd.Series(X).where(signal != 0).interpolate(method='time', limit_direction='both')
+      raise ValueError(f"Unsupported type {type(X.index)} of index 0")
     return filled
 
     
