@@ -34,4 +34,7 @@ V0.3.8, 2026-03-11 -- update test_core: all function accept threshold as
                       'max_time', but  add 'down_rate' as separate threshold 
                       value. if missed  down_rate = -min_rate.
                       implemented 'linear' or 'time' interpolation if pd.Series 
-                      has 'time' index. Use 'linear' only for ndarray vectors 
+                      has 'time' index. Use 'linear' only for ndarray vectors
+v0.3.9, 2026-03-23 -- unify params for zigzag, use linear approximation for
+                      pd.Series with RangeIndex. So, now only Series with DateTimeIndex
+                      use interpolation  method 'time'.
