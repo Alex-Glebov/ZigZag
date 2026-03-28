@@ -117,9 +117,14 @@ def peak_valley_pivots(
     # so we find min in array and substract from array shifting X down 
     # ( or up for negative minimum ) to the zero and add EPS to make global min 
     # positive
-    X  = X.copy() # DEEP COPY as we modify it 
-    X -= X.min()-EPS # - and - give us positive offset        
-
+    # unfortunatelly mistake here in relation to the values relatively to 0 
+    # moving array up or down change %% of changes as it will divide by 
+    # (X[i]-X.min()+EPS) wich significantly raise positions of pivots 
+    
+    #X  = X.copy() # DEEP COPY as we modify it 
+    #X -= X.min()-EPS # - and - give us positive offset        
+    if any(X<=0):
+      raise ValueError("peak_valley_pivots: X Array of positive values only calculated correctly")
 
     return peak_valley_pivots_detailed(X, up_thresh, down_thresh, 
                                        limit_to_finalized_segments, 
@@ -263,18 +268,14 @@ def pivots_to_modes(pivots:list[int])->ndarray[int]:
     x:int 
     t:int 
     modes:ndarray[int]  = np.zeros(len(pivots), dtype=int)
-    mode:int  = -pivots[0] #????
-
-    modes[0] = pivots[0]
-
-    for t in range(1, len(pivots)):
-        x = pivots[t]
-        if x != 0:
-            modes[t] = mode
-            mode = -x
-        else:
-            modes[t] = mode
-
+    modes[:-1]= -pivots[-1]
+    # dodgy moment  pivots[]t==0]<>0 buy design it will override any way 
+    mode=0 # rectify in case we remove assigment first pivot value
+    for t in range(0, len(pivots)-1):
+      x = pivots[t]
+      if x != 0: # any pivot modes - starting new trend
+        mode = -x # trend is reversing to type of pivots 
+      modes[t] = mode # dodgy moment  pivots[]t==0]<>0 buy design   
     return modes
 
 

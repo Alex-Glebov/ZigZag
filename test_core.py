@@ -175,7 +175,7 @@ class TestZigZag(TestCase):
     def test_up_down(self):
       data     = np.array([0.1,  1.  , 3.  , 5.  , 7.  , 8. , 6. , 5. , 5. , 2. ])
       expected = np.array([0.1 , 1.68, 3.26, 4.84, 6.42, 8. , 6.5, 5.0, 3.5, 2. ])
-      zigline = zigzag(data, 0.01, -0.01)
+      zigline = zigzag(data, up_rate=0.01, down_rate=-0.01)
       assert_array_almost_equal( zigline,   expected )
 
 #    def test_down_up(self):
