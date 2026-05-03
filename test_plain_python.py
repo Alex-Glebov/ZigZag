@@ -7,9 +7,9 @@ Created on 12 Sept 2025
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import zigzag as zzg
-import plotting as pl
-from core import zigzag
+import zigzag_dt as zzg
+import zigzag_dt.plotting as pl
+from zigzag_dt.core import zigzag
 
 
 

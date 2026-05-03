@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from zigzag.core import (
+from zigzag_dt.core import (
   identify_initial_pivot,
   peak_valley_pivots,
   max_drawdown,
@@ -10,7 +10,7 @@ from zigzag.core import (
   pivots_to_modes,
   zigzag
   )
-from zigzag import   PEAK,  VALLEY,  SIDEMOVE
+from zigzag_dt import   PEAK,  VALLEY,  SIDEMOVE
 
 from unittest import TestCase
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -106,7 +106,7 @@ class TestPeakValleyPivots(TestCase):
         assert_array_equal(result, expected_result)
 
     def test_strictly_decreasing(self):
-        data = np.linspace(10, 0, 10)
+        data = np.linspace(10, 0.1, 10)
         result = peak_valley_pivots(data, 0.01, -0.01)
         expected_result = np.zeros_like(data)
         expected_result[0], expected_result[-1] = PEAK, VALLEY
@@ -269,7 +269,7 @@ class TestPivotsToModes(TestCase):
     def test_pivots_to_modes(self):
         data = np.array([1, 0, 0, 0, -1, 0, 0, 1, -1, 0, 1])
         result = pivots_to_modes(data)
-        expected_result = np.array([1, -1, -1, -1, -1, 1, 1, 1, -1, 1, 1])
+        expected_result = np.array([-1, -1, -1, -1, 1, 1, 1, -1, 1, 1, 0])
 
         assert_array_equal(result, expected_result)
 

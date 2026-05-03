@@ -7,14 +7,17 @@ conversion to plain python and anc code changes that you should care about corre
  this optimisation economy you one nanosecond in lap year 
   
 '''
-from zigzag.__init__ import  PEAK, VALLEY, EPS 
+PEAK = 1
+VALLEY = -1
+SIDEMOVE = 2
+EPS = 1e-9
 
 import pandas as pd
 import numpy as np
 from numpy import double, array
-from numpy import ndarray, copy 
+from numpy import ndarray, copy
 
-def zigzag(X: pd.Series | np.ndarray, pivots: pd.Series | np.ndarray|None = None, 
+def zigzag(X: pd.Series | np.ndarray, pivots: pd.Series | np.ndarray|None = None,
            up_rate:float=0.02, down_rate=None)->pd.Series:
     """
     Translate pivots into trend lines.
