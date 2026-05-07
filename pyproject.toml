@@ -1,6 +1,6 @@
 [project]
 name = "zigzag-dt"
-version = "0.4.2"
+version = "0.4.3"
 readme = "README.md"
 description = "Package for finding peaks and valleys in array or series."
 authors = [
