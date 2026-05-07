@@ -1,6 +1,13 @@
 from numpy import double
 from typing import NamedTuple
 
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("zigzag-dt")
+except PackageNotFoundError:  # pragma: no cover
+    __version__ = "unknown"
+
 from zigzag_dt.core import (
     PEAK,
     VALLEY,
@@ -25,6 +32,7 @@ zz_max_drawdown = max_drawdown
 zz_line = zigzag
 
 __all__ = [
+    '__version__',
     'PEAK',
     'VALLEY',
     'max_drawdown',

@@ -13,3 +13,8 @@ ZigZag.egg-info
 zigzag.egg-info
 /.project
 /.pydevproject
+
+# Claude Code
+CLAUDE.md
+.claude/
+*.egg-info/

@@ -1,6 +1,6 @@
 source ../.venv/bin/activate
 echo build package "$PWD" 
-poetry build
+python3 -m build
 echo
 echo
 echo --- example of installation ---
